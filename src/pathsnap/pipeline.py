@@ -1578,89 +1578,45 @@ def score_trip(
             / total_transitions
         )
 
-    top1_hmm = 0.0
-    top1_cls = 0.0
-    candidate_miss_rate = 0.0
+    # Observation-level metrics (guideline definition): each GPS point's prediction is
+    # compared with ITS OWN reference arc, assigned by the same monotonic route alignment
+    # (labels.label_trip) that produced the training / student-test labels. Points without
+    # a prediction count as wrong. Server-side only: labels never leave Laptop 1.
+    top1_hmm = top1_cls = candidate_miss_rate = 0.0
+    true_arc = None
+    try:
+        from pathsnap import io as _pio
+        from pathsnap.geo import LocalProjection
+        from pathsnap.labels import label_trip
+        from pathsnap.network import RoadNetwork
 
-    if (
-        hmm_df is not None
-        and not hmm_df.empty
-    ):
+        _trk = _pio.load_track(trip_path)
+        _nodes, _arcs = _pio.load_network(trip_path)
+        _net = RoadNetwork(_nodes, _arcs, LocalProjection.from_track(_trk))
+        true_arc = label_trip(trip_path, _trk, _net)["true_arc_id"]
+    except Exception as e:  # never fail a request because of scoring
+        print(f"[SCORE] route alignment failed ({e}); falling back to route-membership metrics")
 
-        n_obs = len(
-            hmm_df
-        )
+    def _top1(pred_df):
+        if pred_df is None or pred_df.empty:
+            return 0.0
+        if true_arc is None:  # fallback: predicted arc lies anywhere on the route
+            return float(sum(1 for a in pred_df["arc_id"] if a in ref_set) / len(pred_df))
+        pred = pred_df.drop_duplicates("obs_idx").set_index("obs_idx")["arc_id"]
+        pred = pred.reindex(true_arc.index)
+        return float((pred.to_numpy() == true_arc.to_numpy()).mean())
 
-        hmm_in_ref = sum(
-            1
-            for a in hmm_df[
-                "arc_id"
-            ]
-            if a in ref_set
-        )
+    top1_hmm = _top1(hmm_df)
+    top1_cls = _top1(cls_df)
 
-        top1_hmm = float(
-            hmm_in_ref
-            / n_obs
-        )
-
-    if (
-        cls_df is not None
-        and not cls_df.empty
-    ):
-
-        n_obs = len(
-            cls_df
-        )
-
-        cls_in_ref = sum(
-            1
-            for a in cls_df[
-                "arc_id"
-            ]
-            if a in ref_set
-        )
-
-        top1_cls = float(
-            cls_in_ref
-            / n_obs
-        )
-
-    if (
-        cands_df is not None
-        and not cands_df.empty
-    ):
-
-        obs_groups = (
-            cands_df.groupby(
-                "obs_idx"
-            )[
-                "arc_id"
-            ]
-            .apply(set)
-        )
-
-        missed = sum(
-            1
-            for c_set
-            in obs_groups
-            if not c_set.intersection(
-                ref_set
-            )
-        )
-
-        candidate_miss_rate = (
-            float(
-                missed
-                / len(
-                    obs_groups
-                )
-            )
-            if len(
-                obs_groups
-            ) > 0
-            else 0.0
-        )
+    if cands_df is not None and not cands_df.empty:
+        obs_groups = cands_df.groupby("obs_idx")["arc_id"].apply(set)
+        if true_arc is not None:  # true arc of the point is not among its candidates
+            missed = sum(1 for o, a in true_arc.items() if a not in obs_groups.get(o, set()))
+            candidate_miss_rate = float(missed / len(true_arc)) if len(true_arc) else 0.0
+        else:
+            missed = sum(1 for s in obs_groups if not s.intersection(ref_set))
+            candidate_miss_rate = float(missed / len(obs_groups)) if len(obs_groups) else 0.0
 
     return {
         "metrics_available": True,
