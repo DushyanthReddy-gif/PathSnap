@@ -9,3 +9,13 @@
 | 5 | Candidate miss rate (radius 50 m, K = 8): 1.27% on trusted train labels (sweep) | candidate_sweep.py -> eda_candidate_sweep.csv | radius 50 m, K = 8 (larger radius gives no gain; K = 12 gains 0.3 pt for 24% more rows) |
 | 6 | Train table uses every 3rd GPS point (speed); student_test is full resolution | configs/candidates.yaml | `train_obs_stride: 3` |
 | 7 | Reference routes are not perfect ground truth (98-100% of consecutive route arcs connect) | eda_inventory / Dataset doc | all accuracy numbers are "agreement with the reference route" |
+
+## Additional findings (EDA, partitions: train + student_test)
+- Projection: equirectangular, centred on each trip's mean position; degree-Euclidean distance is not used. Files store lon, lat; Folium needs lat, lon.
+- Missing values: none. Timestamps are sorted in all 90 trips.
+- Sampling: 96.7% of steps are exactly 1 s; 70 steps (0.03%) exceed 60 s. Largest gaps: trips 90 (153,064 s), 78 (52,810 s), 69, 21, 11.
+- Network: no isolated nodes; 89 of 90 trips have more than one weakly connected component, so the decoder must handle unreachable steps.
+- Reference route: at least 98.1% connected in every trip. It is a reference, not verified ground truth.
+- Offset trips: in trips 54, 33, 2 and 43 the reference route lies far from the GPS (mean distance 135 m in trip 54, 81 m in trip 33). About 8.7% of train observations have no candidate within 50 m; student_test has none.
+- Decision: labels with label_dist_m <= 50 are used as trusted training labels. Evaluation counts every observation.
+- Label method: monotonic DP alignment never moves backward along the route; nearest-arc labelling did so 173 times in trip 54. The two agree on 93-99.5% of points in the 4 trips tested (eda_label_method_comparison.csv).
