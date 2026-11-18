@@ -1,6 +1,2 @@
 2026-11-18 11:17:29 [INFO] [PREDICT] trip=00000052 n_obs=262 cands=0.0s model=0.0s viterbi=0.2s top1_hmm=1.0 continuity=0.9885 total=0.4s
 2026-11-18 11:17:29 [WARNING] Trip 'invalid_trip_9999' not found in 'data\raw\student_test'
-2026-11-18 11:17:48 [INFO] Loading pipeline artifacts from 'artifacts'...
-2026-11-18 11:17:48 [INFO] Application initialized successfully with model 'Baseline-Distance-HMM'.
-2026-11-18 11:17:55 [INFO] [PREDICT] trip=00000052 n_obs=262 cands=0.0s model=0.0s viterbi=0.2s top1_hmm=1.0 continuity=0.9885 total=0.2s
-2026-11-18 11:20:15 [INFO] [PREDICT] trip=00000052 n_obs=262 cands=0.0s model=0.0s viterbi=0.2s top1_hmm=1.0 continuity=0.9885 total=0.2s

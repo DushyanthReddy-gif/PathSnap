@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 import os
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List
+
+# Ensure src is on sys.path even without pip install -e .
+_repo_root = Path(__file__).resolve().parent.parent
+_src_dir = _repo_root / "src"
+if str(_src_dir) not in sys.path:
+    sys.path.insert(0, str(_src_dir))
 
 import yaml
 from fastapi import FastAPI, HTTPException, status
