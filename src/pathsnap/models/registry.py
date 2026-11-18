@@ -7,41 +7,32 @@ make_model(cfg, seed) turns one entry of configs/models.yaml into an sklearn Pip
 Everything that is *learned* from data (imputation medians, scaling means/stds, the model)
 lives inside the Pipeline, so it is fitted on the training folds only and is saved together
 with the model. The API then calls pipeline.predict_proba(X)[:, 1] - nothing else to apply.
+
+The 5 models (one per algorithm family):
+    logistic_regression     Linear               minimises log loss (+ L2 penalty)
+    gaussian_nb             Probabilistic        maximum-likelihood Gaussian per class (no loss loop)
+    decision_tree           Tree-based           greedy splits minimising Gini impurity
+    random_forest           Ensemble (bagging)   many Gini trees on bootstrap samples, averaged
+    hist_gradient_boosting  Boosting             trees added one by one to minimise log loss
 """
 from pathlib import Path
 
 import yaml
-from sklearn.ensemble import ExtraTreesClassifier, HistGradientBoostingClassifier, RandomForestClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-
-
-def _lightgbm(**p):
-    from lightgbm import LGBMClassifier
-    return LGBMClassifier(**p)
-
-
-def _mlp(**p):
-    if "hidden_layer_sizes" in p:
-        p["hidden_layer_sizes"] = tuple(p["hidden_layer_sizes"])
-    return MLPClassifier(**p)
-
+from sklearn.tree import DecisionTreeClassifier
 
 # estimator key -> (constructor, does it accept random_state?)
 ESTIMATORS = {
     "logistic_regression": (LogisticRegression, True),
     "gaussian_nb": (GaussianNB, False),
-    "knn": (KNeighborsClassifier, False),
-    "extra_trees": (ExtraTreesClassifier, True),
+    "decision_tree": (DecisionTreeClassifier, True),
     "random_forest": (RandomForestClassifier, True),
     "hist_gradient_boosting": (HistGradientBoostingClassifier, True),
-    "lightgbm": (_lightgbm, True),
-    "mlp": (_mlp, True),
 }
 
 

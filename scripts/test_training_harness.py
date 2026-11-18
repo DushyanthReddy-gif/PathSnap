@@ -46,7 +46,7 @@ for tr, va in GroupKFold(5, shuffle=True, random_state=42).split(cands, groups=c
 print("GroupKFold: no trip leaks between train and validation folds")
 
 cfgs = load_model_configs()["models"]
-for name in ["logreg", "gaussian_nb", "lightgbm", "mlp"]:
+for name in cfgs:                                   # all 5 models in configs/models.yaml
     folds, oof = cross_validate(name, cfgs[name], cands, obs_labels, feats, n_splits=5, log=lambda *_: None)
     assert not np.isnan(oof).any(), "every row must get exactly one OOF probability"
     chance = obs_labels.true_in_candidates.mean() / cands.groupby(["trip_id", "obs_idx"]).size().mean()
