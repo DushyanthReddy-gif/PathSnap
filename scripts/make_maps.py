@@ -134,13 +134,24 @@ def make_map_for_trip(trip_id: str, split: str = "student_test") -> None:
     except FileNotFoundError:
         ref_segs = None
 
-    # HMM prediction
+    # HMM prediction: a saved prediction if present, otherwise the live pipeline
+    # (final classifier + HMM + route reconstruction), exactly as the API runs it.
+    clf_segs = None
     pred_df = _load_hmm_prediction(trip_id)
     if pred_df is not None:
         predicted_arc_ids = pred_df.sort_values("obs_idx")["arc_id"].tolist()
         pred_segs = build_arc_segments(predicted_arc_ids, nodes, arcs)
     else:
-        pred_segs = None
+        from pathsnap import pipeline
+        from pathsnap.geo import LocalProjection
+        from pathsnap.hmm.route import reconstruct_route
+        from pathsnap.network import RoadNetwork
+
+        res = pipeline.predict_trip(trip_dir, pipeline.load_artifacts())
+        pred_segs = build_arc_segments(res["route"], nodes, arcs)
+        clf = res["classifier_only"].sort_values("obs_idx")["arc_id"].tolist()
+        net = RoadNetwork(nodes, arcs, LocalProjection.from_track(track))
+        clf_segs = build_arc_segments(reconstruct_route(clf, net), nodes, arcs)
 
     m = make_trip_map(
         gps_latlon=gps_latlon,
@@ -148,6 +159,7 @@ def make_map_for_trip(trip_id: str, split: str = "student_test") -> None:
         reference_segments=ref_segs,
         predicted_segments=pred_segs,
         title=f"PathSnap — Trip {trip_id}",
+        classifier_segments=clf_segs,
     )
 
     out_dir = ROOT / "reports" / "maps"
