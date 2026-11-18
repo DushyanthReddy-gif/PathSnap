@@ -4,3 +4,6 @@
 2026-11-18 11:17:48 [INFO] Application initialized successfully with model 'Baseline-Distance-HMM'.
 2026-11-18 11:17:55 [INFO] [PREDICT] trip=00000052 n_obs=262 cands=0.0s model=0.0s viterbi=0.2s top1_hmm=1.0 continuity=0.9885 total=0.2s
 2026-11-18 11:20:15 [INFO] [PREDICT] trip=00000052 n_obs=262 cands=0.0s model=0.0s viterbi=0.2s top1_hmm=1.0 continuity=0.9885 total=0.2s
+2026-11-18 14:01:09 [INFO] Loading pipeline artifacts from 'artifacts'...
+2026-11-18 14:01:16 [INFO] Application initialized successfully with model 'baseline_model'.
+2026-11-18 14:01:56 [INFO] Application shutting down.
