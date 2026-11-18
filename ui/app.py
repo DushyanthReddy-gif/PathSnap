@@ -35,7 +35,7 @@ except Exception:
         # Center map on mean of GPS points
         avg_lat = sum(p[0] for p in gps) / len(gps)
         avg_lon = sum(p[1] for p in gps) / len(gps)
-        fmap = folium.Map(location=[avg_lat, avg_lon], zoom_start=14, tiles="CartoDB positron")
+        fmap = folium.Map(location=[avg_lat, avg_lon], zoom_start=14, tiles="OpenStreetMap")
 
         # 1. Network Context Layer (subtle grey lines)
         if network_context:
@@ -131,7 +131,7 @@ st.caption("Distributed Evaluation Dashboard — Communicating with FastAPI Back
 # ---------------------------------------------------------------------------
 st.sidebar.header("📡 Backend Connection")
 
-default_api_url = os.environ.get("PATHSNAP_API_URL", "http://localhost:8000").rstrip("/")
+default_api_url = os.environ.get("PATHSNAP_API_URL", "http://127.0.0.1:8000").rstrip("/")
 api_url = st.sidebar.text_input("FastAPI Base URL", value=default_api_url)
 
 # Health Check Button / Auto-check
