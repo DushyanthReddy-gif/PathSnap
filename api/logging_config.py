@@ -11,6 +11,8 @@ from pathlib import Path
 def setup_api_logger(logs_dir: str | Path = "experiments/logs") -> logging.Logger:
     """Set up and configure the API logger with console and file handlers."""
     log_dir_path = Path(logs_dir)
+    if not log_dir_path.is_absolute():          # relative -> repo root (works from any cwd)
+        log_dir_path = Path(__file__).resolve().parents[1] / log_dir_path
     log_dir_path.mkdir(parents=True, exist_ok=True)
 
     date_str = datetime.now().strftime("%Y%m%d")

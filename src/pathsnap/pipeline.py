@@ -734,11 +734,9 @@ def load_artifacts(
     artifacts_dir: str | Path = "artifacts",
 ) -> Dict[str, Any]:
     """Load model, metadata, and HMM parameters once at startup."""
-
-    artifacts_path = Path(
-        artifacts_dir
-    )
-
+    artifacts_path = Path(artifacts_dir)
+    if not artifacts_path.is_absolute():        # relative -> repo root (works from any cwd)
+        artifacts_path = Path(__file__).resolve().parents[2] / artifacts_path
     artifacts: Dict[str, Any] = {
         "model": None,
         "meta": {},

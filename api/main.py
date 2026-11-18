@@ -11,8 +11,15 @@ from typing import Any, Dict, List
 # Ensure src is on sys.path even without pip install -e .
 _repo_root = Path(__file__).resolve().parent.parent
 _src_dir = _repo_root / "src"
-if str(_src_dir) not in sys.path:
-    sys.path.insert(0, str(_src_dir))
+for _p in (_src_dir, _repo_root):          # repo root too, so `import api.*` works from any cwd
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
+
+
+def _abs(p) -> Path:
+    """Relative paths (in configs/api.yaml) are relative to the repo root, not the current folder."""
+    p = Path(p)
+    return p if p.is_absolute() else _repo_root / p
 
 import yaml
 from fastapi import FastAPI, HTTPException, status
@@ -32,7 +39,7 @@ from pathsnap.pipeline import load_artifacts, predict_trip, score_trip
 # ---------------------------------------------------------------------------
 # Load Configuration
 # ---------------------------------------------------------------------------
-CONFIG_PATH = Path("configs/api.yaml")
+CONFIG_PATH = _repo_root / "configs" / "api.yaml"
 
 
 def load_config() -> Dict[str, Any]:
@@ -56,7 +63,7 @@ def load_config() -> Dict[str, Any]:
 
 
 config = load_config()
-logger = setup_api_logger()
+logger = setup_api_logger(_repo_root / "experiments" / "logs")
 
 # Global state loaded once at startup
 app_state: Dict[str, Any] = {
@@ -70,7 +77,7 @@ async def lifespan(app: FastAPI):
     """Load model, metadata and HMM parameters once at application startup."""
     artifacts_dir = config.get("artifacts_dir", "artifacts")
     logger.info(f"Loading pipeline artifacts from '{artifacts_dir}'...")
-    artifacts = load_artifacts(artifacts_dir)
+    artifacts = load_artifacts(_abs(artifacts_dir))
     app_state["artifacts"] = artifacts
     app_state["model_name"] = artifacts.get("model_name", "Baseline-Distance-HMM")
     logger.info(f"Application initialized successfully with model '{app_state['model_name']}'.")
@@ -115,7 +122,7 @@ def list_trips() -> TripListResponse:
     """Dynamically list all trip IDs found in configured trips_dir."""
     # Re-read config trips_dir in case it was updated on disk
     curr_config = load_config()
-    trips_dir = Path(curr_config.get("trips_dir", "data/raw/student_test"))
+    trips_dir = _abs(curr_config.get("trips_dir", "data/raw/student_test"))
 
     if not trips_dir.exists():
         logger.warning(f"Trips directory '{trips_dir}' does not exist.")
@@ -134,7 +141,7 @@ def list_trips() -> TripListResponse:
 def predict_endpoint(request: PredictRequest) -> PredictResponse:
     """Execute live end-to-end reconstruction for a given trip_id."""
     curr_config = load_config()
-    trips_dir = Path(curr_config.get("trips_dir", "data/raw/student_test"))
+    trips_dir = _abs(curr_config.get("trips_dir", "data/raw/student_test"))
     trip_id = request.trip_id.strip()
 
     trip_path = trips_dir / trip_id
@@ -204,3 +211,10 @@ def predict_endpoint(request: PredictRequest) -> PredictResponse:
         metrics=EvaluationMetrics(**metrics_dict),
         timings=TimingMetrics(**timings),
     )
+
+
+if __name__ == "__main__":
+    # Lets the API start from any folder / the VS Code Run button:  python api/main.py
+    import uvicorn
+
+    uvicorn.run(app, host=config.get("host", "0.0.0.0"), port=int(config.get("port", 8000)))

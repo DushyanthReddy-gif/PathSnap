@@ -8,7 +8,7 @@ from pathsnap.geo import LocalProjection
 from pathsnap.network import RoadNetwork
 from pathsnap.labels import label_trip, align_route, nearest_route_arc
 
-root = sys.argv[1]
+root = sys.argv[1] if len(sys.argv) > 1 else str(Path(__file__).resolve().parents[1] / "data" / "raw")  # default: repo data/raw
 train = f"{root}/train"
 trips = io.list_trips(train)
 npts = {t: sum(1 for _ in open(f"{train}/{t}/{t}.track")) for t in trips}

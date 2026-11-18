@@ -7,7 +7,7 @@ from pathsnap import io
 from pathsnap.geo import LocalProjection, point_to_segment
 from pathsnap.network import RoadNetwork
 
-root = sys.argv[1]
+root = sys.argv[1] if len(sys.argv) > 1 else str(Path(__file__).resolve().parents[1] / "data" / "raw")  # default: repo data/raw
 train = f"{root}/train"
 trips = io.list_trips(train)
 print("trips:", len(trips), trips[:3])

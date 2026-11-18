@@ -15,6 +15,14 @@ import requests
 import streamlit as st
 from streamlit_folium import st_folium
 
+# Make the repo's src/ importable from any working directory (streamlit only adds ui/)
+import sys
+from pathlib import Path
+
+_SRC = Path(__file__).resolve().parents[1] / "src"
+if _SRC.is_dir() and str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
 # Try to import team map builder if available, otherwise use local fallback
 try:
     from pathsnap.viz.maps import make_trip_map  # type: ignore
