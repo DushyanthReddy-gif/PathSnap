@@ -134,7 +134,7 @@ def make_trip_map(
         tiles="CartoDB positron",
         prefer_canvas=True,
     )
-    folium.TileLayer("OpenStreetMap", name="OpenStreetMap (needs http://)").add_to(m)
+    folium.TileLayer("OpenStreetMap", name="OpenStreetMap (needs http://)", show=False).add_to(m)
 
     # ── Layer 1: Road network context (grey, thin) ────────────────────────
     legend_entries: dict[str, str] = {}
