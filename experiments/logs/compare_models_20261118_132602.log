@@ -1,0 +1,55 @@
+[data] train (trusted): 80 trips, 61739 obs, 353003 rows | student_test: 10 trips, 19160 obs, 113694 rows
+[data] features (10): ['dist_m', 'dist_rank', 'dist_delta', 'n_cands', 'proj_frac', 'arc_length_m', 'heading_diff_deg', 'speed_mps', 'dt_gap_s', 'deg_to_out']
+[setup] seed=42 folds=5 models=['logreg', 'gaussian_nb', 'decision_tree', 'random_forest', 'hist_gb']
+
+=== logreg (Linear) | C=1.0, max_iter=1000, scaled
+  [logreg] fold 0: val macroF1=0.8879 top1=0.8121 logloss=0.2064 | train top1=0.8316 | fit 0.4s
+  [logreg] fold 1: val macroF1=0.9134 top1=0.8581 logloss=0.1763 | train top1=0.8180 | fit 0.3s
+  [logreg] fold 2: val macroF1=0.8883 top1=0.8108 logloss=0.1984 | train top1=0.8314 | fit 0.3s
+  [logreg] fold 3: val macroF1=0.9191 top1=0.8545 logloss=0.1499 | train top1=0.8226 | fit 0.3s
+  [logreg] fold 4: val macroF1=0.8772 top1=0.7928 logloss=0.1982 | train top1=0.8370 | fit 0.3s
+  [logreg] CV macroF1=0.8972±0.0181 | TEST top1=0.8364 macroF1=0.9026 logloss=0.1732 continuity=0.7141 | infer=0.5ms/1k obs
+
+=== gaussian_nb (Probabilistic (generative)) | var_smoothing=1e-09
+  [gaussian_nb] fold 0: val macroF1=0.8737 top1=0.7887 logloss=0.5599 | train top1=0.8208 | fit 0.1s
+  [gaussian_nb] fold 1: val macroF1=0.9101 top1=0.8529 logloss=0.5365 | train top1=0.8029 | fit 0.1s
+  [gaussian_nb] fold 2: val macroF1=0.8808 top1=0.7985 logloss=0.4760 | train top1=0.8183 | fit 0.1s
+  [gaussian_nb] fold 3: val macroF1=0.9074 top1=0.8353 logloss=0.4272 | train top1=0.8096 | fit 0.1s
+  [gaussian_nb] fold 4: val macroF1=0.8737 top1=0.7868 logloss=0.3674 | train top1=0.8269 | fit 0.1s
+  [gaussian_nb] CV macroF1=0.8892±0.0182 | TEST top1=0.8173 macroF1=0.8912 logloss=0.5261 continuity=0.6831 | infer=0.4ms/1k obs
+
+=== decision_tree (Tree-based) | max_depth=10, min_samples_leaf=50, criterion=gini
+  [decision_tree] fold 0: val macroF1=0.8939 top1=0.8220 logloss=0.1697 | train top1=0.8539 | fit 1.1s
+  [decision_tree] fold 1: val macroF1=0.9181 top1=0.8658 logloss=0.1337 | train top1=0.8393 | fit 1.0s
+  [decision_tree] fold 2: val macroF1=0.8867 top1=0.8082 logloss=0.1753 | train top1=0.8496 | fit 1.1s
+  [decision_tree] fold 3: val macroF1=0.9256 top1=0.8652 logloss=0.1072 | train top1=0.8462 | fit 1.2s
+  [decision_tree] fold 4: val macroF1=0.8818 top1=0.8004 logloss=0.1673 | train top1=0.8569 | fit 1.2s
+  [decision_tree] CV macroF1=0.9012±0.0195 | TEST top1=0.8452 macroF1=0.9080 logloss=0.1313 continuity=0.7359 | infer=0.4ms/1k obs
+
+=== random_forest (Ensemble (bagging)) | n_estimators=100, max_depth=12, min_samples_leaf=20, trained on 60000 obs subsample
+  [random_forest] fold 0: val macroF1=0.8916 top1=0.8181 logloss=0.1558 | train top1=0.8597 | fit 2.6s
+  [random_forest] fold 1: val macroF1=0.9184 top1=0.8663 logloss=0.1280 | train top1=0.8467 | fit 2.2s
+  [random_forest] fold 2: val macroF1=0.8924 top1=0.8177 logloss=0.1508 | train top1=0.8586 | fit 2.6s
+  [random_forest] fold 3: val macroF1=0.9246 top1=0.8635 logloss=0.1020 | train top1=0.8538 | fit 2.7s
+  [random_forest] fold 4: val macroF1=0.8834 top1=0.8031 logloss=0.1529 | train top1=0.8657 | fit 2.6s
+  [random_forest] CV macroF1=0.9021±0.0182 | TEST top1=0.8447 macroF1=0.9076 logloss=0.1251 continuity=0.7396 | infer=3.7ms/1k obs
+
+=== hist_gb (Boosting) | learning_rate=0.1, max_iter=300, max_leaf_nodes=31, min_samples_leaf=20, l2_regularization=0.0, early_stopping=True
+  [hist_gb] fold 0: val macroF1=0.8945 top1=0.8229 logloss=0.1543 | train top1=0.8718 | fit 0.9s
+  [hist_gb] fold 1: val macroF1=0.9164 top1=0.8630 logloss=0.1278 | train top1=0.8629 | fit 0.7s
+  [hist_gb] fold 2: val macroF1=0.8951 top1=0.8220 logloss=0.1509 | train top1=0.8797 | fit 1.2s
+  [hist_gb] fold 3: val macroF1=0.9255 top1=0.8651 logloss=0.0990 | train top1=0.8696 | fit 1.0s
+  [hist_gb] fold 4: val macroF1=0.8815 top1=0.7999 logloss=0.1578 | train top1=0.8877 | fit 1.2s
+  [hist_gb] boosting stopped after 143 iterations (early stopping)
+  [hist_gb] CV macroF1=0.9026±0.0179 | TEST top1=0.8459 macroF1=0.9084 logloss=0.1241 continuity=0.7378 | infer=2.5ms/1k obs
+
+=== SUMMARY (sorted by CV macro-F1)
+        model  cv_macro_f1_mean  cv_macro_f1_std  test_top1  test_macro_f1  test_log_loss  test_route_continuity  cv_train_top1_mean  cv_top1_mean  inference_ms_per_1k_obs
+      hist_gb            0.9026           0.0179     0.8459         0.9084         0.1241                 0.7378              0.8743        0.8346                   2.4694
+random_forest            0.9021           0.0182     0.8447         0.9076         0.1251                 0.7396              0.8569        0.8337                   3.7046
+decision_tree            0.9012           0.0195     0.8452         0.9080         0.1313                 0.7359              0.8492        0.8323                   0.3502
+       logreg            0.8972           0.0181     0.8364         0.9026         0.1732                 0.7141              0.8281        0.8257                   0.4735
+  gaussian_nb            0.8892           0.0182     0.8173         0.8912         0.5261                 0.6831              0.8157        0.8124                   0.3841
+
+figures: reports/figures/model_comparison_panel.png, reports/figures/model_overfit_gap.png, reports/figures/model_confusion_matrices.png, reports/figures/model_histgb_loss_curve.png
+log: experiments/logs/compare_models_20261118_132602.log
