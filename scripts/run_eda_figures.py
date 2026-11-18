@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
@@ -90,7 +91,7 @@ ol = pd.concat([read("train_obs_labels").assign(partition="train"), read("studen
 dist = ol["label_dist_m"].clip(upper=100)
 fig, ax = plt.subplots(figsize=(4.2, 2.6))
 ax.hist(dist, bins=50, color="#2166ac"); ax.set_yscale("log"); ax.axvline(50, color="#d6604d", ls="--", label="candidate radius 50 m")
-ax.set_xlabel("distance GPS point -> its reference road (m; last bar = 100 m or more)"); ax.set_ylabel("GPS points (log)")
+ax.set_xlabel("GPS point to reference road (m; last bar = 100 m+)"); ax.set_ylabel("GPS points (log)")
 ax.set_title("GPS noise vs reference route"); ax.legend(frameon=False)
 fig.tight_layout(); fig.savefig(FIG / "eda_label_distance.png", dpi=200); plt.close(fig)
 print("GPS->reference distance: median %.1f m, 95th pct %.1f m, share > 50 m: %.3f" % (ol.label_dist_m.median(), ol.label_dist_m.quantile(.95), (ol.label_dist_m > 50).mean()))
@@ -104,8 +105,8 @@ def trip_axes(ax, split, t):
     for a in near[:3000]:
         ax.plot([n.x1[a], n.x2[a]], [n.y1[a], n.y2[a]], color="#bbbbbb", lw=.6, zorder=1)
     for a in route:
-        ax.plot([n.x1[a], n.x2[a]], [n.y1[a], n.y2[a]], color="#1a9850", lw=3.2, zorder=2)
-    ax.scatter(px, py, s=1.2, color="#2166ac", zorder=3)
+        ax.plot([n.x1[a], n.x2[a]], [n.y1[a], n.y2[a]], color="#1a9850", lw=1.2, zorder=4)
+    ax.scatter(px, py, s=5, color="#2166ac", zorder=3)
     ax.set_aspect("equal"); ax.set_xticks([]); ax.set_yticks([]); ax.set_title(f"trip {t} ({split})", fontsize=8)
 
 # small multiples of 6 trips
@@ -118,7 +119,11 @@ fig.tight_layout(); fig.savefig(FIG / "eda_trajectories.png", dpi=200); plt.clos
 # 2-panel figure for the report: trajectory/network/route + GPS noise histogram
 fig, (a, b) = plt.subplots(1, 2, figsize=(7, 2.9), gridspec_kw={"width_ratios": [1.1, 1]})
 trip_axes(a, "student_test", "00000052")
+a.legend(handles=[Line2D([0], [0], color="#bbbbbb", lw=1, label="Road network"),
+                  Line2D([0], [0], color="#1a9850", lw=2.4, label="Reference route"),
+                  Line2D([0], [0], marker="o", color="w", markerfacecolor="#2166ac", markersize=4, label="GPS points")],
+         fontsize=6, frameon=False, loc="upper left")
 b.hist(dist, bins=50, color="#2166ac"); b.set_yscale("log"); b.axvline(50, color="#d6604d", ls="--", label="radius 50 m")
-b.set_xlabel("GPS point -> reference road (m; last bar = 100 m or more)"); b.set_ylabel("GPS points (log)"); b.set_title("GPS noise vs reference", fontsize=8); b.legend(frameon=False)
+b.set_xlabel("GPS point to reference road (m; last bar = 100 m+)"); b.set_ylabel("GPS points (log)"); b.set_title("GPS noise vs reference", fontsize=8); b.legend(frameon=False)
 fig.tight_layout(); fig.savefig(FIG / "eda_report_panel.png", dpi=250); plt.close(fig)
 print("figures written to", FIG)
