@@ -1,0 +1,5 @@
+trip,partition,n_obs,route_len,pct_labels_differ,mean_dist_dp_m,mean_dist_nearest_m,p95_dist_dp_m,p95_dist_nearest_m,backward_jumps_dp,backward_jumps_nearest
+00000054,train,19313,422,7.02,134.81,131.82,209.6,209.6,0,173
+00000033,train,5844,169,1.32,80.98,80.87,142.0,142.0,0,42
+00000001,train,1315,525,0.46,5.02,5.0,12.4,12.4,0,4
+00000052,student_test,262,95,1.91,5.03,5.03,12.6,12.6,0,1
