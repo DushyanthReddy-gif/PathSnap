@@ -177,15 +177,22 @@ pip install -r requirements-ui.txt
 Each step has a dedicated standalone script; every script runs from any working directory:
 
 ```bash
-# 1. Exploratory Data Analysis
+# 0. Sanity tests (optional, ~10 s)
+python scripts/test_foundation.py
+python scripts/test_labels.py
+python scripts/test_no_route.py
+python scripts/test_candidate_metrics.py
+python scripts/test_training_harness.py
+
+# 1. Build Processed Dataset (generates data/processed/*.parquet, ~15 s) - needed by every later step
+python scripts/build_dataset.py
+
+# 2. Exploratory Data Analysis
 python scripts/run_eda.py
 python scripts/run_eda_figures.py
 python scripts/candidate_sweep.py
 python scripts/compare_label_methods.py
 python scripts/make_eda_map.py
-
-# 2. Build Processed Dataset (generates data/processed/*.parquet)
-python scripts/build_dataset.py
 
 # 3. Compare the 5 classifiers (LogReg, GaussianNB, DecisionTree, RandomForest, HistGB)
 python scripts/compare_models.py
@@ -196,14 +203,18 @@ python scripts/tune_model.py
 # 5. Export the untuned baseline model (the tuned final model is exported by step 4)
 python scripts/export_model.py --model hist_gb --as baseline
 
-# 6. Run HMM Viterbi Decoder Experiments
+# 6. Tune the HMM decoder on train out-of-fold probabilities (~9 min) -> artifacts/hmm_params.json
+python scripts/tune_hmm.py
+
+# 7. HMM vs classifier-only comparison on student_test
 python scripts/run_hmm_experiments.py
 
-# 7. Generate Folium Maps
+# 8. Generate Folium Maps
 python scripts/make_maps.py --trip 00000052
 
-# 8. Run Smoke Test across all 10 student_test trips
+# 9. End-to-end tests: all 10 student_test trips + hardest train trips
 python scripts/smoke_test_pipeline.py
+python scripts/stress_test_pipeline.py
 ```
 
 ---
