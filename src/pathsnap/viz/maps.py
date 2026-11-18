@@ -125,12 +125,16 @@ def make_trip_map(
             sum(p[1] for p in gps_latlon) / len(gps_latlon),
         ]
 
+    # CartoDB Positron as the default background: it loads when the HTML is opened
+    # straight from disk (file://). OpenStreetMap's servers refuse tile requests that
+    # carry no Referer (HTTP 403), so OSM is offered as a second, selectable base layer.
     m = folium.Map(
         location=centre,
         zoom_start=14,
-        tiles="OpenStreetMap",
+        tiles="CartoDB positron",
         prefer_canvas=True,
     )
+    folium.TileLayer("OpenStreetMap", name="OpenStreetMap (needs http://)").add_to(m)
 
     # ── Layer 1: Road network context (grey, thin) ────────────────────────
     legend_entries: dict[str, str] = {}

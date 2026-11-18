@@ -47,7 +47,8 @@ if len(near_arcs) > args.max_segments:
     near_arcs = np.random.default_rng(42).choice(near_arcs, args.max_segments, replace=False)
 
 lat_c, lon_c = trk["lat"].mean(), trk["lon"].mean()
-m = folium.Map(location=[lat_c, lon_c], zoom_start=14, tiles="OpenStreetMap")
+# CartoDB Positron loads from file://; OpenStreetMap tiles are refused without a Referer (HTTP 403)
+m = folium.Map(location=[lat_c, lon_c], zoom_start=14, tiles="CartoDB positron")
 
 g_net = folium.FeatureGroup(name="Road network (near trip)")
 for a in near_arcs:
