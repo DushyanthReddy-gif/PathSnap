@@ -430,19 +430,67 @@ def predict_trip(
 
     # Stage 1: Load Data
     t0 = time.perf_counter()
-    track_df, nodes_df, arcs_df = load_raw_trip_data(trip_path)
+    try:
+        from pathsnap.io import load_track, load_network  # type: ignore
+        track_df = load_track(trip_path)
+        nodes_df, arcs_df = load_network(trip_path)
+    except Exception:
+        track_df, nodes_df, arcs_df = load_raw_trip_data(trip_path)
     load_s = time.perf_counter() - t0
 
     # Stage 2: Candidates & Features
     t0 = time.perf_counter()
     cands_df: Optional[pd.DataFrame] = None
 
-    # Check if team module pathsnap.candidates is present
+    # Check if team RoadNetwork & candidates are available
     try:
-        from pathsnap.candidates import generate_candidates  # type: ignore
-        cands_df = generate_candidates(track_df, nodes_df, arcs_df)
+        from pathsnap.geo import LocalProjection  # type: ignore
+        from pathsnap.network import RoadNetwork  # type: ignore
+        
+        proj = LocalProjection.from_track(track_df)
+        net = RoadNetwork(nodes_df, arcs_df, proj)
+        px, py = proj.to_xy(track_df["lon"].to_numpy(), track_df["lat"].to_numpy())
+        obs, arc, dist, frac = net.candidates_near(px, py, radius_m=50.0)
+        
+        t_arr = track_df["t"].to_numpy()
+        cands_df = pd.DataFrame({
+            "obs_idx": obs.astype(np.int32),
+            "t": t_arr[obs].astype(np.float32),
+            "arc_id": arc.astype(np.int32),
+            "dist_m": dist.astype(np.float32),
+            "proj_frac": frac.astype(np.float32),
+        })
+        
+        # Ensure every observation has at least one candidate
+        all_obs = set(range(len(track_df)))
+        covered_obs = set(obs)
+        missing_obs = all_obs - covered_obs
+        if missing_obs:
+            fallback_obs, fallback_arc, fallback_dist, fallback_frac = net.candidates_near(
+                px[list(missing_obs)], py[list(missing_obs)], radius_m=200.0
+            )
+            if len(fallback_obs) > 0:
+                missing_list = list(missing_obs)
+                real_missing_obs = [missing_list[i] for i in fallback_obs]
+                fb_df = pd.DataFrame({
+                    "obs_idx": np.array(real_missing_obs, dtype=np.int32),
+                    "t": t_arr[real_missing_obs].astype(np.float32),
+                    "arc_id": fallback_arc.astype(np.int32),
+                    "dist_m": fallback_dist.astype(np.float32),
+                    "proj_frac": fallback_frac.astype(np.float32),
+                })
+                cands_df = pd.concat([cands_df, fb_df], ignore_index=True)
+        cands_df = cands_df.sort_values(by=["obs_idx", "dist_m"]).reset_index(drop=True)
     except Exception:
         pass
+
+    # Check if team candidates module is present
+    if cands_df is None or len(cands_df) == 0:
+        try:
+            from pathsnap.candidates import generate_candidates  # type: ignore
+            cands_df = generate_candidates(track_df, nodes_df, arcs_df)
+        except Exception:
+            pass
 
     if cands_df is None or len(cands_df) == 0:
         cands_df, _ = generate_candidates_internal(track_df, nodes_df, arcs_df)
