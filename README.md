@@ -5,7 +5,6 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.25%2B-FF4B4B.svg)](https://streamlit.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
@@ -37,7 +36,7 @@ PathSnap reconstructs the true sequence of road network arcs traversed by noisy 
 └──────────────────────────────┬──────────────────────────────┘
                                │
                 HTTP / JSON    │ Local WiFi Hotspot
-                Port 8000      │ (e.g. 192.168.43.x)
+                Port 8000      │ (e.g. 10.57.1.x)
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                 LAPTOP 2 (Dushyanth / Client)               │
@@ -90,8 +89,7 @@ pathsnap/
 │   ├── features.py                         # Spatial & kinematic feature engineering
 │   ├── models/
 │   │   ├── registry.py                     # Classifier pipeline factory
-│   │   ├── train.py                        # GroupKFold cross-validation & training
-│   │   └── tune.py                         # Optuna Bayesian optimization
+│   │   └── train.py                        # GroupKFold cross-validation, trusted-label filter, scoring
 │   ├── hmm/
 │   │   ├── emissions.py                    # Emission probability formulations
 │   │   ├── transitions.py                  # Network topology transition penalty matrix
@@ -104,14 +102,19 @@ pathsnap/
 │   │   └── maps.py                         # Folium interactive map builder
 │   └── pipeline.py                         # Central predict_trip() and score_trip()
 ├── scripts/
-│   ├── run_eda.py                          # Exploratory data analysis
+│   ├── run_eda.py                          # EDA inventory (trips, points, gaps, extents)
+│   ├── run_eda_figures.py                  # EDA figures + network connectivity / sampling CSVs
+│   ├── candidate_sweep.py                  # Candidate radius / K sweep (miss rate vs rows)
+│   ├── compare_label_methods.py            # DP route alignment vs nearest-arc labelling
+│   ├── make_eda_map.py                     # Folium EDA map (GPS, network, reference route)
 │   ├── build_dataset.py                    # Preprocesses raw trips into parquet tables
-│   ├── compare_models.py                   # Benchmarks 5+ candidate classifier models
-│   ├── tune_model.py                       # Runs Optuna hyperparameter optimization
-│   ├── export_model.py                     # Serializes best model to artifacts/
+│   ├── compare_models.py                   # Compares the 5 classifiers (GroupKFold CV + student-test)
+│   ├── tune_model.py                       # Optuna TPE search; exports final_model.joblib
+│   ├── export_model.py                     # Trains + serializes one model to artifacts/
 │   ├── run_hmm_experiments.py              # Evaluates HMM configurations
 │   ├── make_maps.py                        # Generates offline HTML map visualizations
-│   └── smoke_test_pipeline.py              # End-to-end test verifying all 10 test trips
+│   ├── smoke_test_pipeline.py              # End-to-end test verifying all 10 test trips
+│   └── test_*.py                           # Unit/sanity tests (foundation, labels, no-route, metrics, harness)
 ├── api/
 │   ├── main.py                             # FastAPI application & endpoints
 │   ├── schemas.py                          # Pydantic request / response schemas
@@ -171,29 +174,33 @@ pip install -r requirements-ui.txt
 
 ## 4. Reproducing the Pipeline (Step-by-Step)
 
-Each step has a dedicated standalone script runnable from the repo root:
+Each step has a dedicated standalone script; every script runs from any working directory:
 
 ```bash
 # 1. Exploratory Data Analysis
 python scripts/run_eda.py
+python scripts/run_eda_figures.py
+python scripts/candidate_sweep.py
+python scripts/compare_label_methods.py
+python scripts/make_eda_map.py
 
 # 2. Build Processed Dataset (generates data/processed/*.parquet)
 python scripts/build_dataset.py
 
-# 3. Benchmark Candidate Classification Models (5+ models)
+# 3. Compare the 5 classifiers (LogReg, GaussianNB, DecisionTree, RandomForest, HistGB)
 python scripts/compare_models.py
 
-# 4. Bayesian Hyperparameter Optimization (Optuna)
+# 4. Bayesian Hyperparameter Optimization (Optuna TPE, ~8 min) -> artifacts/final_model.joblib
 python scripts/tune_model.py
 
-# 5. Export Baseline and Final Models
-python scripts/export_model.py
+# 5. Export the untuned baseline model (the tuned final model is exported by step 4)
+python scripts/export_model.py --model hist_gb --as baseline
 
 # 6. Run HMM Viterbi Decoder Experiments
 python scripts/run_hmm_experiments.py
 
 # 7. Generate Folium Maps
-python scripts/make_maps.py
+python scripts/make_maps.py --trip 00000052
 
 # 8. Run Smoke Test across all 10 student_test trips
 python scripts/smoke_test_pipeline.py
@@ -213,10 +220,12 @@ python scripts/smoke_test_pipeline.py
 2. Check IP address on hotspot:
    ```bash
    ip -brief address
-   # Note the IP, e.g. 192.168.43.100
+   # Note the IP, e.g. 10.57.1.135
    ```
-3. Start the FastAPI server:
+3. Start the FastAPI server (either command; keep this terminal visible for the request logs):
    ```bash
+   python api/main.py
+   # or, from the repo root:
    uvicorn api.main:app --host 0.0.0.0 --port 8000
    ```
 
@@ -253,8 +262,8 @@ When the 10 evaluator trips are provided:
 
 | Person | Role | Deliverables & Responsibilities |
 |---|---|---|
-| **Poojitha (P1)** | Data & Feature Engineering | I/O, local UTM projections, road network graph, candidate generation, ground truth alignment, feature engineering, EDA, report assembly |
-| **Aditya (P2)** | Models & Bayesian Optimization | Classifier benchmarking (Logistic Regression, RF, LightGBM, MLP), Optuna hyperparameter tuning, model serialization |
+| **Poojitha (P1)** | Data & Feature Engineering | I/O, per-trip local equirectangular projection, road network graph, candidate generation, ground truth alignment, feature engineering, EDA, report assembly |
+| **Aditya (P2)** | Models & Bayesian Optimization | Metrics + GroupKFold training harness, comparison of 5 classifiers (Logistic Regression, Gaussian NB, Decision Tree, Random Forest, HistGradientBoosting), Optuna TPE tuning, model export |
 | **Leka (P3)** | HMM / Viterbi & Visualizations | Transition and emission formulations, Viterbi dynamic programming decoder, route continuity and sequence metrics, Folium interactive maps |
 | **Dushyanth (P4)** | Repo Owner, Pipeline & Deployment | Git repository owner, unified pipeline (`pipeline.py`), FastAPI backend, Streamlit UI, distributed hotspot deployment, smoke tests |
 
@@ -262,7 +271,9 @@ When the 10 evaluator trips are provided:
 
 ## 7. Results Summary
 
-- Model benchmarking results: `experiments/results/model_comparison.csv`
-- Optuna optimization trials: `experiments/results/optuna_trials.csv`
-- HMM ablation and tuning: `experiments/results/hmm_experiments.csv`
-- Full test evaluation: `experiments/results/student_test_metrics.csv`
+- EDA: `experiments/results/eda_inventory.csv`, `eda_candidate_sweep.csv`, `eda_label_quality.csv`, `eda_label_method_comparison.csv`, `data_quality_log.md`
+- Model comparison (5 models, CV + student-test): `experiments/results/model_comparison.csv`, `cv_folds.csv`, `confusion_matrices.json`
+- Optuna trials and tuned vs untuned: `experiments/results/optuna_trials.csv`, `optuna_best_params.json`, `tuned_vs_untuned.csv`
+- HMM comparison and tuning: `experiments/results/hmm_comparison.csv`, `hmm_param_search.csv`, `hmm_failure_cases.md`
+- Classifier probabilities for the HMM: `experiments/results/probs/`
+- Figures: `reports/figures/` · Maps: `reports/maps/` · Run logs: `experiments/logs/`
