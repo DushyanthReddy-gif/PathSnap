@@ -33,7 +33,10 @@ args = ap.parse_args()
 
 all_cfg = load_model_configs(ROOT / "configs" / "models.yaml")
 cfg, seed = all_cfg["models"][args.model], all_cfg.get("seed", 42)
-override = json.load(open(args.params)) if args.params else None
+params_path = Path(args.params) if args.params else None
+if params_path is not None and not params_path.is_absolute():
+    params_path = ROOT / params_path                         # relative paths are from the repo root
+override = json.load(open(params_path)) if params_path else None
 label_cfg = yaml.safe_load(open(ROOT / "configs" / "candidates.yaml"))
 processed = ROOT / "data" / "processed"
 

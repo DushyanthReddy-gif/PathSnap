@@ -25,7 +25,7 @@
   ],
   "seed": 42,
   "trained_on": "train (80 trips, trusted labels only, 353003 candidate rows)",
-  "fit_seconds": 1.38,
+  "fit_seconds": 1.15,
   "model_file_mb": 0.23,
   "student_test": {
     "rule": "top1",
@@ -42,7 +42,7 @@
     "top1_accuracy": 0.8459290187891441,
     "top1_accuracy_covered": 0.8492978411234542,
     "n_observations": 19160,
-    "inference_ms_per_1k_obs": 3.3046633089081547
+    "inference_ms_per_1k_obs": 2.775276878895062
   },
   "student_test_confusion_matrix": [
     [
@@ -54,5 +54,5 @@
       16208
     ]
   ],
-  "created": "2026-11-18T12:51:34"
+  "created": "2026-11-18T13:01:46"
 }

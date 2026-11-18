@@ -36,7 +36,11 @@ ESTIMATORS = {
 }
 
 
-def load_model_configs(path="configs/models.yaml"):
+REPO_ROOT = Path(__file__).resolve().parents[3]          # src/pathsnap/models/ -> repo root
+
+
+def load_model_configs(path=REPO_ROOT / "configs" / "models.yaml"):
+    """Works from any working directory (VS Code Run button, terminal, notebook)."""
     with open(Path(path)) as f:
         return yaml.safe_load(f)
 
