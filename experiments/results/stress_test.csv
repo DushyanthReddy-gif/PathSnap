@@ -1,6 +1,6 @@
 trip_id,stress,status,seconds,n_obs,route_arcs,top1_hmm,route_continuity
-00000013,"largest network (307,392 arcs)",ok,11.11,2580,788,1.0,1.0
-00000054,"most GPS points (19,313); reference route does not fit the GPS",ok,7.13,19313,724,0.6475,1.0
-00000021,"15,783 points, 2,160 s gap",ok,0.88,15783,277,1.0,1.0
-00000090,"longest gap (153,064 s)",ok,2.92,536,237,0.9907,1.0
-00000078,"52,800 s gap, 75% of steps 1 s",ok,1.47,2909,1802,0.9955,1.0
+00000013,"largest network (307,392 arcs)",ok,11.67,2580,788,0.9961,1.0
+00000054,"most GPS points (19,313); reference route does not fit the GPS",ok,7.57,19313,724,0.0891,1.0
+00000021,"15,783 points, 2,160 s gap",ok,1.14,15783,277,0.9698,1.0
+00000090,"longest gap (153,064 s)",ok,2.93,536,237,0.9347,1.0
+00000078,"52,800 s gap, 75% of steps 1 s",ok,1.83,2909,1802,0.9904,1.0
