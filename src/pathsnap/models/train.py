@@ -37,6 +37,21 @@ def load_split(processed_dir, split):
     return cands, obs
 
 
+def trusted_only(cands, obs_labels, max_label_dist_m=50.0):
+    """Training/CV data: keep only observations whose reference label is trusted.
+
+    P1 flags a label as trusted (label_ok = 1) when the GPS point lies within
+    max_label_dist_m of its reference road. On a few train trips (e.g. 54, 33) the reference
+    route does not fit the GPS at all; learning from those labels would teach the model noise.
+    Student-test scoring does NOT use this filter (we report on every observation).
+    """
+    if "label_ok" in cands.columns:
+        cands = cands[cands["label_ok"] == 1]
+    if "label_dist_m" in obs_labels.columns:
+        obs_labels = obs_labels[obs_labels["label_dist_m"] <= max_label_dist_m]
+    return cands.reset_index(drop=True), obs_labels.reset_index(drop=True)
+
+
 def feature_columns(cands):
     """FEATURE_COLUMNS from P1's features.py if available, else every non-id numeric column."""
     try:

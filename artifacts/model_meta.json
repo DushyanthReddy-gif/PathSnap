@@ -1,0 +1,58 @@
+{
+  "model_name": "hist_gb",
+  "kind": "baseline",
+  "family": "Boosting",
+  "estimator": "hist_gradient_boosting",
+  "params": {
+    "learning_rate": 0.1,
+    "max_iter": 300,
+    "max_leaf_nodes": 31,
+    "min_samples_leaf": 20,
+    "l2_regularization": 0.0,
+    "early_stopping": true
+  },
+  "feature_columns": [
+    "dist_m",
+    "dist_rank",
+    "dist_delta",
+    "n_cands",
+    "proj_frac",
+    "arc_length_m",
+    "heading_diff_deg",
+    "speed_mps",
+    "dt_gap_s",
+    "deg_to_out"
+  ],
+  "seed": 42,
+  "trained_on": "train (80 trips, trusted labels only, 353003 candidate rows)",
+  "fit_seconds": 1.38,
+  "model_file_mb": 0.23,
+  "student_test": {
+    "rule": "top1",
+    "n_candidates": 113694,
+    "positive_rate": 0.16785406441852693,
+    "accuracy": 0.9487395992752476,
+    "precision": 0.8459290187891441,
+    "recall": 0.8492978411234542,
+    "f1": 0.8476100826273403,
+    "macro_precision": 0.9077530510832766,
+    "macro_recall": 0.9090480327063206,
+    "macro_f1": 0.9083987899919259,
+    "log_loss": 0.12408525769276768,
+    "top1_accuracy": 0.8459290187891441,
+    "top1_accuracy_covered": 0.8492978411234542,
+    "n_observations": 19160,
+    "inference_ms_per_1k_obs": 3.3046633089081547
+  },
+  "student_test_confusion_matrix": [
+    [
+      91658,
+      2952
+    ],
+    [
+      2876,
+      16208
+    ]
+  ],
+  "created": "2026-11-18T12:51:34"
+}
