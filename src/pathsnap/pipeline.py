@@ -983,7 +983,7 @@ def predict_trip(
         "[CANDIDATES] "
         f"generated={len(cands_df)} "
         f"observations="
-        f"{track_df['obs_idx'].nunique()}"
+        f"{len(track_df)}"  # obs_idx is the index of track_df, not a column
     )
 
     # Build exactly the feature columns
