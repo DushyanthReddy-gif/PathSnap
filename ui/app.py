@@ -277,11 +277,13 @@ if "last_result" in st.session_state:
     # Map Rendering
     st.markdown("### 🗺️ Trajectory & Map-Matched Route")
     # CRITICAL: Reference route is NOT sent by API and MUST be None
+    # positional: works with the team map builder (viz/maps.py) and the local fallback
+    # (both take gps, network, reference, predicted in this order); no reference route in the UI
     fmap = make_trip_map(
-        gps=gps,
-        network_context=network_context,
-        reference_segments=None,
-        predicted_route=predicted_route,
+        gps,
+        network_context,
+        None,
+        predicted_route,
     )
     st_folium(fmap, width="100%", height=550)
 
