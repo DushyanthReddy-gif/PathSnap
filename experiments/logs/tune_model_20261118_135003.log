@@ -1,0 +1,2 @@
+[setup] model=hist_gb sampler=TPE n_trials=30 folds=5 objective=mean CV macro_f1 | train 80 trips, 353003 rows
+[setup] search space: {'learning_rate': {'type': 'float', 'low': 0.02, 'high': 0.3, 'log': True}, 'max_leaf_nodes': {'type': 'int', 'low': 15, 'high': 127, 'log': True}, 'min_samples_leaf': {'type': 'int', 'low': 10, 'high': 300, 'log': True}, 'l2_regularization': {'type': 'float', 'low': 0.0001, 'high': 10.0, 'log': True}, 'max_features': {'type': 'float', 'low': 0.5, 'high': 1.0}} | fixed: {'max_iter': 500, 'early_stopping': True}

@@ -1,0 +1,9 @@
+{
+  "max_iter": 500,
+  "early_stopping": true,
+  "learning_rate": 0.09062202652919857,
+  "max_leaf_nodes": 15,
+  "min_samples_leaf": 34,
+  "l2_regularization": 0.06505909900004328,
+  "max_features": 0.8231698903202863
+}

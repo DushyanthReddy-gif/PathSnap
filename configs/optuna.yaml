@@ -1,5 +1,19 @@
+# P2 (Aditya) - Bayesian hyperparameter optimisation of the selected model (report §4).
+model: hist_gb                 # selected in Step 6 (best CV macro-F1 and best log loss)
+sampler: TPE                   # Optuna Tree-structured Parzen Estimator (Bayesian, sequential)
 n_trials: 30
-cv_folds: 5
-metric: macro_f1
+cv_folds: 5                    # GroupKFold by trip on the 80 train trips (trusted labels), same folds as Step 6
+metric: macro_f1               # objective = mean CV macro-F1 (top-1 rule); Top-1 and log loss are logged per trial
 direction: maximize
 seed: 42
+
+# Fixed during the search: max_iter=500 with early stopping, so the number of trees is
+# chosen automatically per trial instead of being searched.
+fixed: {max_iter: 500, early_stopping: true}
+
+search_space:
+  learning_rate:     {type: float, low: 0.02, high: 0.3, log: true}   # step size: small = slow but careful
+  max_leaf_nodes:    {type: int,   low: 15,   high: 127, log: true}   # tree complexity (default 31)
+  min_samples_leaf:  {type: int,   low: 10,   high: 300, log: true}   # larger = smoother, less overfitting
+  l2_regularization: {type: float, low: 1.0e-4, high: 10.0, log: true} # penalty on leaf values
+  max_features:      {type: float, low: 0.5,  high: 1.0}              # share of the 10 features per split
