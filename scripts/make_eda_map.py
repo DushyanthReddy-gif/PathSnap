@@ -47,8 +47,14 @@ if len(near_arcs) > args.max_segments:
     near_arcs = np.random.default_rng(42).choice(near_arcs, args.max_segments, replace=False)
 
 lat_c, lon_c = trk["lat"].mean(), trk["lon"].mean()
-# CartoDB Positron loads from file://; OpenStreetMap tiles are refused without a Referer (HTTP 403)
-m = folium.Map(location=[lat_c, lon_c], zoom_start=14, tiles="CartoDB positron")
+# Esri light gray loads from file://; OpenStreetMap refuses tiles without a Referer (HTTP 403)
+# and CARTO serves "API key required" tiles, so neither is used as the default background.
+m = folium.Map(location=[lat_c, lon_c], zoom_start=14, tiles=None)
+folium.TileLayer(
+    tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attr="Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
+    name="Esri light gray", max_native_zoom=16, max_zoom=19,
+).add_to(m)
 
 g_net = folium.FeatureGroup(name="Road network (near trip)")
 for a in near_arcs:

@@ -125,15 +125,16 @@ def make_trip_map(
             sum(p[1] for p in gps_latlon) / len(gps_latlon),
         ]
 
-    # CartoDB Positron as the default background: it loads when the HTML is opened
-    # straight from disk (file://). OpenStreetMap's servers refuse tile requests that
-    # carry no Referer (HTTP 403), so OSM is offered as a second, selectable base layer.
-    m = folium.Map(
-        location=centre,
-        zoom_start=14,
-        tiles="CartoDB positron",
-        prefer_canvas=True,
-    )
+    # Esri World Light Gray as the default background: it loads when the HTML is opened
+    # straight from disk (file://). OpenStreetMap refuses tile requests without a Referer
+    # (HTTP 403) and CARTO answers with "API key required" tiles, so OSM is only offered
+    # as a second, selectable base layer (it works when the map is served over http://).
+    m = folium.Map(location=centre, zoom_start=14, tiles=None, prefer_canvas=True)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
+        name="Esri light gray", max_native_zoom=16, max_zoom=19,
+    ).add_to(m)
     folium.TileLayer("OpenStreetMap", name="OpenStreetMap (needs http://)", show=False).add_to(m)
 
     # ── Layer 1: Road network context (grey, thin) ────────────────────────
