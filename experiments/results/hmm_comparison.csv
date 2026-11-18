@@ -1,0 +1,1 @@
+trip_id,n_obs,clf_top1,clf_continuity,clf_precision,clf_recall,clf_f1,clf_time_s,hmm_top1,hmm_continuity,hmm_precision,hmm_recall,hmm_f1,hmm_time_s
