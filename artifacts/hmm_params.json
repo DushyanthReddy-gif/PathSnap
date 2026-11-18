@@ -1,9 +1,9 @@
 {
-  "sigma_m": 20.0,
+  "sigma_m": 5.0,
   "sigma_z": 20.0,
-  "beta": 20.0,
-  "alpha": 0.0,
-  "use_classifier_probabilities": false,
+  "beta": 5.0,
+  "alpha": 0.75,
+  "use_classifier_probabilities": true,
   "penalty_disconnected": -1000.0,
   "gap_s": 60.0,
   "max_speed_ms": 50.0,

@@ -38,7 +38,11 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from pathsnap import io as pio
+from pathsnap.geo import LocalProjection
+from pathsnap.hmm.route import reconstruct_route
 from pathsnap.hmm.viterbi import decode
+from pathsnap.network import RoadNetwork
 from pathsnap.evaluation.route_metrics import (
     candidate_miss_rate,
     route_continuity,
@@ -143,7 +147,12 @@ def main():
     parser.add_argument("--trips", default="all", help="comma-separated trip IDs or 'all'")
     parser.add_argument("--params", default="artifacts/hmm_params.json")
     parser.add_argument("--grid-search", action="store_true")
+    parser.add_argument("--probs", default="experiments/results/probs/student_test_hist_gb_tuned.parquet",
+                        help="classifier probabilities (column p) of the deployed model for this split")
     args = parser.parse_args()
+    probs = pd.read_parquet(ROOT / args.probs)
+    probs["trip_id"] = probs["trip_id"].astype(str)
+    print(f"Classifier probabilities: {args.probs} ({len(probs)} rows)")
 
     root = ROOT
     raw_dir = root / "data" / "raw" / args.split
@@ -174,8 +183,14 @@ def main():
         cands = _load_candidates(trip_id, processed_dir, raw_dir, args.split)
         if cands.empty:
             continue
+        # classifier probability p of the deployed model, per (obs, candidate arc)
+        cands = cands.merge(probs[probs["trip_id"] == trip_id][["obs_idx", "arc_id", "p"]],
+                            on=["obs_idx", "arc_id"], how="left")
 
-        network = _load_network(trip_dir)
+        # same RoadNetwork (projection, lengths, adjacency) as the API pipeline
+        _trk = pio.load_track(trip_dir)
+        _nodes, _arcs = pio.load_network(trip_dir)
+        network = RoadNetwork(_nodes, _arcs, LocalProjection.from_track(_trk))
 
         # Try to load labels (may not exist for inference-only split)
         labels_path = processed_dir / f"{args.split}_obs_labels.parquet"
@@ -199,8 +214,10 @@ def main():
         clf_time = time.perf_counter() - t0
 
         clf_top1 = _top1_accuracy(clf_pred, obs_labels) if has_labels else float("nan")
-        clf_cont = route_continuity(clf_pred["arc_id"].tolist(), network)
-        clf_seq  = sequence_metrics(clf_pred["arc_id"].tolist(), ref_route.tolist())
+        clf_cont_raw = route_continuity(clf_pred["arc_id"].tolist(), network)        # per-point arcs
+        clf_route = reconstruct_route(clf_pred["arc_id"].tolist(), network, params.get("cutoff_m", 2000.0))
+        clf_cont = route_continuity(clf_route, network)                               # drivable route
+        clf_seq  = sequence_metrics(clf_route, ref_route.tolist())
 
         # ── HMM decode ───────────────────────────────────────────────────
         t0 = time.perf_counter()
@@ -208,8 +225,11 @@ def main():
         hmm_time = time.perf_counter() - t0
 
         hmm_top1 = _top1_accuracy(hmm_pred, obs_labels) if has_labels else float("nan")
-        hmm_cont = route_continuity(hmm_pred["arc_id"].tolist(), network)
-        hmm_seq  = sequence_metrics(hmm_pred["arc_id"].tolist(), ref_route.tolist())
+        hmm_arcs = hmm_pred.sort_values("obs_idx")["arc_id"].tolist()
+        hmm_cont_raw = route_continuity(hmm_arcs, network)
+        hmm_route = reconstruct_route(hmm_arcs, network, params.get("cutoff_m", 2000.0))
+        hmm_cont = route_continuity(hmm_route, network)
+        hmm_seq  = sequence_metrics(hmm_route, ref_route.tolist())
 
         print(
             f"  CLF  top1={clf_top1:.3f}  cont={clf_cont:.3f}  "
@@ -225,6 +245,7 @@ def main():
             "n_obs": len(clf_pred),
             # classifier-only
             "clf_top1": clf_top1,
+            "clf_continuity_raw": clf_cont_raw,
             "clf_continuity": clf_cont,
             "clf_precision": clf_seq["precision"],
             "clf_recall": clf_seq["recall"],
@@ -232,6 +253,7 @@ def main():
             "clf_time_s": round(clf_time, 4),
             # HMM
             "hmm_top1": hmm_top1,
+            "hmm_continuity_raw": hmm_cont_raw,
             "hmm_continuity": hmm_cont,
             "hmm_precision": hmm_seq["precision"],
             "hmm_recall": hmm_seq["recall"],
@@ -253,7 +275,8 @@ def main():
     # Overall summary row
     df = pd.DataFrame(comparison_rows)
     print("\n── Overall averages ──")
-    for col in ["clf_top1", "clf_continuity", "clf_f1", "hmm_top1", "hmm_continuity", "hmm_f1"]:
+    for col in ["clf_top1", "clf_continuity_raw", "clf_continuity", "clf_f1",
+                "hmm_top1", "hmm_continuity_raw", "hmm_continuity", "hmm_f1", "hmm_time_s"]:
         print(f"  {col}: {df[col].mean():.4f}")
 
     print(f"\nResults written to {out_csv}")

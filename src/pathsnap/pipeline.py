@@ -1126,21 +1126,15 @@ def predict_trip(
             ),
         )
 
-        route_arcs = []
+        # One drivable route: collapse repeats and fill the connecting road
+        # segments between consecutive decoded arcs (bounded shortest path).
+        from pathsnap.hmm.route import reconstruct_route
 
-        for arc in hmm_df[
-            "arc_id"
-        ]:
-
-            if (
-                not route_arcs
-                or route_arcs[-1]
-                != arc
-            ):
-
-                route_arcs.append(
-                    int(arc)
-                )
+        route_arcs = reconstruct_route(
+            hmm_df["arc_id"],
+            net,
+            float(artifacts.get("hmm_params", {}).get("cutoff_m", 2000.0)),
+        )
 
         print(
             "[HMM] "
