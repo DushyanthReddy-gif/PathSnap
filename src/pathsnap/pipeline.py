@@ -1114,9 +1114,12 @@ def predict_trip(
             decode as team_decode,
         )
 
+        # Leka's decoder reads the classifier probability from column "p"
+        # and needs the RoadNetwork (arc lengths, connectivity), not the raw arcs table.
+        cands_df["p"] = cands_df["prob"]
         hmm_df = team_decode(
             cands_df,
-            arcs_df,
+            net,
             artifacts.get(
                 "hmm_params",
                 {},
