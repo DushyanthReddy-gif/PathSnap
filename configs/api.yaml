@@ -1,0 +1,6 @@
+host: 0.0.0.0
+port: 8000
+trips_dir: data/raw/student_test     # switch to data/eval for the final evaluation
+artifacts_dir: artifacts
+display_max_gps_points: 2000         # downsampling for display only
+display_max_network_segments: 3000

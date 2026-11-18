@@ -1,0 +1,5 @@
+seed: 42
+data_dir: data/raw
+processed_dir: data/processed
+artifacts_dir: artifacts
+projection: local_utm

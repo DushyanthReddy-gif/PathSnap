@@ -1,0 +1,4 @@
+sigma_z: 10.0
+beta: 5.0
+use_classifier_probabilities: true
+penalty_disconnected: -20.0

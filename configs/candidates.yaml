@@ -1,0 +1,4 @@
+radius_m: 50.0
+max_k: 15
+train_obs_stride: 1
+gap_s: 10.0
